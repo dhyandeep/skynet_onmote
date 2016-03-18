@@ -43,14 +43,13 @@
 #include <math.h>
 
 #define N 8
-#define LENGTH 64
-#define PROCESS_CONF_NO_PROCESS_NAMES 1
+#define LENGTH 8
 typedef unsigned char u8_t; 
 char* INFILE1 ="/home/dhyandeepak/Desktop/outa.bmp";
 char* INFILE2 ="/home/dhyandeepak/Desktop/outb.bmp";
 char* OUTFILE ="/home/dhyandeepak/Desktop/out.pgm";
 
-u8_t mat[LENGTH][LENGTH];
+u8_t mat[N][N];
 unsigned char info1[56];
 
 
@@ -98,6 +97,7 @@ static void fdct_ref(float *dst, const float *src)
     float tmp[N*N];
     dct_1d_ref(tmp, src, 1, N, dct_matrix);
     dct_1d_ref(dst, tmp, N, 1, dct_matrix);
+  
 }
 
 static void idct_ref(float *dst, const float *src)
@@ -105,40 +105,6 @@ static void idct_ref(float *dst, const float *src)
     float tmp[N*N];
     dct_1d_ref(tmp, src, 1, N, dct_trp_matrix);
     dct_1d_ref(dst, tmp, N, 1, dct_trp_matrix);
-}
-void filehand(char* filename) {
- 
-    
-  
-	u8_t fd_read = cfs_open(filename, CFS_READ);
-	int i=0,j=0;
-	unsigned char info1[56],data[LENGTH*LENGTH],rmng[2000];
-	cfs_read(fd_read,info1, 56); 										// read the 54-byte headr
-	int width1 = *(int*)&info1[18];
-	int height1 = *(int*)&info1[22];
-	int offset=*(int*)&info1[10];
-	int size = width1 * height1;
-	
-
-	cfs_read(fd_read,rmng, offset-56);
-	cfs_read(fd_read,data, size);
-	
-	
-	printf("Reading from file:\n");
-	for(i=0;i<LENGTH*LENGTH;i++)
-	{
-		if(((i!=0)&&(i%LENGTH))==0)
-		{
-			j++;
-			printf("\n");
-			
-		}
-		mat[j][i%LENGTH]=data[i];
-		printf("%d ",mat[j][i%LENGTH]);
-	}
-
-	cfs_close(fd_read);
-	
 }
 char rev[4];
 void intochar(int num)
@@ -158,42 +124,12 @@ void intochar(int num)
 	for(i=i-1;i>=0;i--)
 	{
 		rev[k]=str[i];
-		
 		k++;
 	}
    rev[k]='\0';
-   //printf("%s",rev);
+   //printf("%s",rev);`
    
 }
-void filewrite(char* out)
-{
-	int i,j,k,pix;
-	int fd_write = cfs_open(out, CFS_WRITE);
-	char* header="P2\n64 64\n255\n";	//change image size of the image here also
-	char* space=" ";
-	char* nline="\n";
-	
-	
-	cfs_write(fd_write,header,15);
-	printf("\n\n\nwriting\n");
-	for(i=0;i<LENGTH;i++)
-	{
-		for(j=0;j<LENGTH;j=j+1)
-		{
-			intochar(mat[i][j]);
-			cfs_write(fd_write,rev,4);
-			//printf("%s ",rev);
-			cfs_write(fd_write,space,1);
-			
-		}
-			cfs_write(fd_write,nline,1);
-			//printf("\n");
-	}
-	
-	cfs_close(fd_write);
-}
-
-
 /*---------------------------------------------------------------------------*/
 PROCESS(hello_world_process, "dct process");
 AUTOSTART_PROCESSES(&hello_world_process);
@@ -202,61 +138,22 @@ PROCESS_THREAD(hello_world_process, ev, data)
 {
   PROCESS_BEGIN();
   printf("dct\n");
-   int i,j,k,l,p,in1[LENGTH][LENGTH],in2[LENGTH][LENGTH];
-    
-    float src1[N*N],src2[N*N];
-    float out_fdct1[N*N],out_fdct2[N*N], out_idct[N*N];
-    
-    
-	filehand(INFILE1);
-	for(i=0;i<LENGTH;i++)
-			for(j=0;j<LENGTH;j++)
-				in1[i][j]=mat[i][j];//store the returned matrix in in1
-
-	filehand(INFILE2);
-	for(i=0;i<LENGTH;i++)
-			for(j=0;j<LENGTH;j++)					
-				in2[i][j]=(mat[i][j]);//store the returned matrix in in2
-	
-	
-
-	for(j=0;j<LENGTH/N;j++)
+  int i,j;
+  int arr[N*N];
+   float result[N*N];
+   printf("<");
+	for(i=0;i<N*N;i++)
 	{
-	   for(i=0;i<LENGTH/N;i++)
-	   {
-			for(k=0;k<N;k++)
-			{
-				for(l=0;l<N;l++)
-				{
-					src1[l+N*k]=in1[(N*j+k)][(l+N*i)];//store 8X8 image block into an array
-					src2[l+N*k]=in2[(N*j+k)][(l+N*i)];
-					//printf("src:%f ",src1[l+N*k]);
-				}
-				printf("\n");
-			}
+			arr[i]=i%16;
+			if(i%N==0)
 			printf("\n");
-			init_dct();
-			fdct_ref(out_fdct1, src1);//find fast dct for each 8X8 blocks
-			fdct_ref(out_fdct2, src2);
-			int med;
-			for(med=0;med<N*N;med++)
-			{
-				out_fdct1[med]=(out_fdct1[med]+out_fdct2[med])/2;//picking the best pixel from 2 inputs
-			}
+			printf("%d ",arr[i] );
 			
-			idct_ref(out_idct, out_fdct1);
-			for(k=0;k<N;k++)
-			{
-				for(l=0;l<N;l++)
-				{		
-					mat[(N*j+k)][(l+N*i)]=out_idct[l+N*k];//store 8X8  block's compressed values into the matrix itself
-				}
-			}
-	   }
-	   
+		
 	}
-    filewrite(OUTFILE);//write the matrix into file
-    
+    fdct_ref(result,arr);
+      printf(">");
   PROCESS_END();
 }
 /*---------------------------------------------------------------------------*/
+
