@@ -11,10 +11,16 @@ print("connected to: " + ser.portstr)
 ser.write("help\n");
 
 f=open("read.txt","w");
-while True:
+data=0
+while data <> "<":
+	data = ser.read();
+text=""
+while data<>'>':
 	data = ser.read();
 	if data:
 		print(data),
 		f.write(data)
-		
+		text=text+data;
+values=text.split()
+print (values)
 f.close();
