@@ -39,23 +39,76 @@
 
 #include "contiki.h"
 #include <stdio.h> /* For printf() */
-#include <cfs/cfs.h>
+//#include <cfs/cfs.h>
 #include <math.h>
+#include "/home/dhyandeepak/Desktop/contiki-2.7/cpu/msp430/dev/uart1.h"
 
 #define N 8
 #define LENGTH 8
+#define SERIAL_BUF_SIZE 256
+
 typedef unsigned char u8_t; 
 char* INFILE1 ="/home/dhyandeepak/Desktop/outa.bmp";
 char* INFILE2 ="/home/dhyandeepak/Desktop/outb.bmp";
 char* OUTFILE ="/home/dhyandeepak/Desktop/out.pgm";
 
-u8_t mat[N][N];
-unsigned char info1[56];
-
+float mat1[N*N];
+float mat2[N*N];
 
 static float dct_matrix    [N*N];
 static float dct_trp_matrix[N*N];
 
+
+
+int currentnum=0,val=0,counter=0;
+static int uart_rx_callback(unsigned char c) //read from serial port
+{
+     uint8_t u;
+     printf("\nReceived %c",c);
+     u = (uint8_t)c;
+     //printf("\nReceived %u",u);
+     if(c!=' ')
+     {
+		 val=c-'0';
+		 currentnum=currentnum*10+val;
+	 }
+	 else 
+	 {
+		 printf("\nvalue:%d",currentnum);
+		 if(counter<64)
+		 mat1[counter]=currentnum;
+		 else
+		 mat2[counter%64]=currentnum;
+		 val=0;
+		 currentnum=0;
+		 counter++;
+		 printf("\nno:%d ",counter);
+	 }
+	 if(counter==128)
+	 {
+		 int i;
+		 for(i=0;i<N*N;i++)
+		 {
+			
+			if(i%N==0)
+			printf("\n");
+			printf("%f ",mat1[i] );
+			
+		
+		}
+		for(i=0;i<N*N;i++)
+		 {
+			
+			if(i%N==0)
+			printf("\n");
+			printf("%f ",mat2[i] );
+			
+		
+		}
+		performdct();					//calculate dct and take inverse
+	 }
+     return u;
+}
 void init_dct(void)
 {
     int i, j;
@@ -130,6 +183,25 @@ void intochar(int num)
    //printf("%s",rev);`
    
 }
+void performdct()
+{
+	float fourier1[N*N],fourier2[N*N],inverse[N*N];
+	
+	init_dct();
+	fdct_ref(fourier1,mat1);
+	fdct_ref(fourier2,mat2);
+	int i=0;
+	for(i=0;i<64;i++)
+	{
+		fourier1[i]=(fourier1[i]+fourier2[i])/2;
+	}
+	idct_ref(inverse,fourier1);
+	for(i=0;i<64;i++)
+	{
+		printf("%d ",(int)inverse[i]);
+	
+	}
+}
 /*---------------------------------------------------------------------------*/
 PROCESS(hello_world_process, "dct process");
 AUTOSTART_PROCESSES(&hello_world_process);
@@ -137,22 +209,13 @@ AUTOSTART_PROCESSES(&hello_world_process);
 PROCESS_THREAD(hello_world_process, ev, data)
 {
   PROCESS_BEGIN();
-  printf("dct\n");
-  int i,j;
-  int arr[N*N];
-   float result[N*N];
-   printf("<");
-	for(i=0;i<N*N;i++)
-	{
-			arr[i]=i%16;
-			if(i%N==0)
-			printf("\n");
-			printf("%d ",arr[i] );
-			
-		
-	}
-    fdct_ref(result,arr);
-      printf(">");
+  
+	uart1_init(BAUD2UBR(115200)); //set the baud rate as necessary
+	uart1_set_input(uart_rx_callback); //set the callback function
+	
+	printf("dct\n");
+    
+    printf(">");
   PROCESS_END();
 }
 /*---------------------------------------------------------------------------*/
