@@ -1,0 +1,2 @@
+#define PROCESS_CONF_NO_PROCESS_NAMES 1
+#define NETSTACK_CONF_RDC nullrdc_driver
