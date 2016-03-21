@@ -46,7 +46,7 @@
 #define N 8
 #define LENGTH 8
 #define CONTIKI_NO_NET=1
-
+#define UART_DEFAULT_TXBUFSIZE 1
 
 float mat1[N*N];
 float mat2[N*N];
@@ -54,6 +54,7 @@ float mat2[N*N];
 
 
 int currentnum=0,val=0,counter=0;
+unsigned char c;
 static int uart_rx_callback(unsigned char c) //read from serial port
 {
      uint8_t u;
@@ -76,8 +77,11 @@ static int uart_rx_callback(unsigned char c) //read from serial port
 		 currentnum=0;
 		 counter++;
 		 printf("\nno:%d ",counter);
+		 
+	// if(counter==16)
+	 
 	 }
-	 if(counter==128)
+	 if(counter==64)
 	 {
 		 int i;
 		 for(i=0;i<N*N;i++)
@@ -98,8 +102,11 @@ static int uart_rx_callback(unsigned char c) //read from serial port
 			
 		
 		}
-		performdct();					//calculate dct and take inverse
+		
+		performdct();
+		counter=0;					//calculate dct and take inverse
 	 }
+	 
      return u;
 }
 
@@ -197,6 +204,8 @@ static void idct(float *dst, const float *src)
     idct_1d(tmp, src, 1, N, 1, N);
     idct_1d(dst, tmp, N, 1, N, 1);
 }
+
+
 
 
 void  performdct()
