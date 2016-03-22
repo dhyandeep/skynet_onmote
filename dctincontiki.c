@@ -58,7 +58,7 @@ unsigned char c;
 static int uart_rx_callback(unsigned char c) //read from serial port
 {
      uint8_t u;
-     printf("\nReceived %c",c);
+     //printf("\nReceived %c",c);
      u = (uint8_t)c;
      //printf("\nReceived %u",u);
      if(c!=' ')
@@ -68,7 +68,7 @@ static int uart_rx_callback(unsigned char c) //read from serial port
 	 }
 	 else 
 	 {
-		 printf("\nvalue:%d",currentnum);
+		// printf("\nvalue:%d",currentnum);
 		 if(counter<64)
 		 mat1[counter]=currentnum;
 		 else
@@ -81,7 +81,7 @@ static int uart_rx_callback(unsigned char c) //read from serial port
 	// if(counter==16)
 	 
 	 }
-	 if(counter==64)
+	 if(counter==128)
 	 {
 		 int i;
 		 for(i=0;i<N*N;i++)
@@ -104,6 +104,7 @@ static int uart_rx_callback(unsigned char c) //read from serial port
 		}
 		
 		performdct();
+		uart1_writeb('<');
 		counter=0;					//calculate dct and take inverse
 	 }
 	 
