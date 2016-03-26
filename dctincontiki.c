@@ -104,7 +104,6 @@ static int uart_rx_callback(unsigned char c) //read from serial port
 		}
 		
 		performdct();
-		uart1_writeb('<');
 		counter=0;					//calculate dct and take inverse
 	 }
 	 
@@ -222,7 +221,7 @@ void  performdct()
 		fourier1[i]=(fourier1[i]+fourier2[i])/2.0;
 	}
 	idct(inverse,fourier1);
-	printf("\n");
+	printf("\n<");
 	
 	for(i=0;i<64;i++)
 	{
@@ -232,6 +231,7 @@ void  performdct()
 		
 	
 	}
+	printf(">\n");
 }
 /*---------------------------------------------------------------------------*/
 PROCESS(hello_world_process, "dct process");
